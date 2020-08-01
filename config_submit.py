@@ -1,4 +1,4 @@
-config = {'datapath':'/data/',
+config = {'datapath':'./data/',
           'preprocess_result_path':'./prep_result/',
           'outputfile':'prediction.csv',
           
