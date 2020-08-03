@@ -7,7 +7,7 @@ config = {'datapath':'./data/',
          'classifier_model':'net_classifier',
          'classifier_param':'./model/classifier.ckpt',
          'n_gpu':1,
-         'n_worker_preprocessing':0,
+         'n_worker_preprocessing':None,
          'use_exsiting_preprocessing':False,
          'skip_preprocessing':False,
          'skip_detect':False}
