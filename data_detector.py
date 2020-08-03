@@ -25,7 +25,7 @@ class DataBowl3Detector(Dataset):
         self.r_rand = config['r_rand_crop']
         self.augtype = config['augtype']
         data_dir = config['datadir']
-	self.pad_value = config['pad_value']
+        self.pad_value = config['pad_value']
         
         self.split_comber = split_comber
         idcs = split
@@ -75,8 +75,7 @@ class DataBowl3Detector(Dataset):
     def __getitem__(self, idx,split=None):
         t = time.time()
         np.random.seed(int(str(t%1)[2:7]))#seed according to time
-
-	isRandomImg  = False
+        isRandomImg  = False
         if self.phase !='test':
             if idx>=len(self.bboxes):
                 isRandom = True
@@ -90,7 +89,7 @@ class DataBowl3Detector(Dataset):
         if self.phase != 'test':
             if not isRandomImg:
                 bbox = self.bboxes[idx]
-		filename = self.filenames[int(bbox[0])]
+                filename = self.filenames[int(bbox[0])]
                 imgs = np.load(filename)[0:self.channel]
                 bboxes = self.sample_bboxes[int(bbox[0])]
                 isScale = self.augtype['scale'] and (self.phase=='train')
@@ -100,7 +99,7 @@ class DataBowl3Detector(Dataset):
                         ifflip = self.augtype['flip'], ifrotate=self.augtype['rotate'], ifswap = self.augtype['swap'])
             else:
                 randimid = np.random.randint(len(self.kagglenames))
-		filename = self.kagglenames[randimid]
+                filename = self.kagglenames[randimid]
                 imgs = np.load(filename)[0:self.channel]
                 bboxes = self.sample_bboxes[randimid]
                 isScale = self.augtype['scale'] and (self.phase=='train')
@@ -118,25 +117,30 @@ class DataBowl3Detector(Dataset):
             pz = int(np.ceil(float(nz) / self.stride)) * self.stride
             ph = int(np.ceil(float(nh) / self.stride)) * self.stride
             pw = int(np.ceil(float(nw) / self.stride)) * self.stride
-            imgs = np.pad(imgs, [[0,0],[0, pz - nz], [0, ph - nh], [0, pw - nw]], 'constant',constant_values = self.pad_value)
-            xx,yy,zz = np.meshgrid(np.linspace(-0.5,0.5,imgs.shape[1]/self.stride),
-                                   np.linspace(-0.5,0.5,imgs.shape[2]/self.stride),
-                                   np.linspace(-0.5,0.5,imgs.shape[3]/self.stride),indexing ='ij')
+
+            imgs = np.pad(imgs, ((0,0),(0, int(pz) - int(nz)), (0, int(ph) - int(nh)), (0, int(pw) - int(nw))), 'constant',constant_values = int(self.pad_value))
+            print(45645645688888888466613)
+            xx,yy,zz = np.meshgrid(np.linspace(-0.5,0.5,int(imgs.shape[1]/self.stride)),
+                                   np.linspace(-0.5,0.5,int(imgs.shape[2]/self.stride)),
+                                   np.linspace(-0.5,0.5,int(imgs.shape[3]/self.stride)),indexing ='ij')
             coord = np.concatenate([xx[np.newaxis,...], yy[np.newaxis,...],zz[np.newaxis,:]],0).astype('float32')
             imgs, nzhw = self.split_comber.split(imgs)
+            print('a3')
             coord2, nzhw2 = self.split_comber.split(coord,
                                                    side_len = self.split_comber.side_len/self.stride,
                                                    max_stride = self.split_comber.max_stride/self.stride,
                                                    margin = self.split_comber.margin/self.stride)
             assert np.all(nzhw==nzhw2)
+            print('a4')
             imgs = (imgs.astype(np.float32)-128)/128
+            print('a5')
             return torch.from_numpy(imgs.astype(np.float32)), bboxes, torch.from_numpy(coord2.astype(np.float32)), np.array(nzhw)
 
     def __len__(self):
         if self.phase == 'train':
-            return len(self.bboxes)/(1-self.r_rand)
-	elif self.phase =='val':
-	    return len(self.bboxes)
+          return len(self.bboxes)/(1-self.r_rand)
+        elif self.phase =='val':
+          return len(self.bboxes)
         else:
             return len(self.filenames)
         
@@ -187,7 +191,7 @@ class Crop(object):
         self.crop_size = config['crop_size']
         self.bound_size = config['bound_size']
         self.stride = config['stride']
-	self.pad_value = config['pad_value']
+        self.pad_value = config['pad_value']
 
     def __call__(self, imgs, target, bboxes,isScale=False,isRand=False):
         if isScale:
@@ -221,9 +225,9 @@ class Crop(object):
                 
         normstart = np.array(start).astype('float32')/np.array(imgs.shape[1:])-0.5
         normsize = np.array(crop_size).astype('float32')/np.array(imgs.shape[1:])
-        xx,yy,zz = np.meshgrid(np.linspace(normstart[0],normstart[0]+normsize[0],self.crop_size[0]/self.stride),
-                           np.linspace(normstart[1],normstart[1]+normsize[1],self.crop_size[1]/self.stride),
-                           np.linspace(normstart[2],normstart[2]+normsize[2],self.crop_size[2]/self.stride),indexing ='ij')
+        xx,yy,zz = np.meshgrid(np.linspace(normstart[0],normstart[0]+normsize[0],int(self.crop_size[0]/self.stride)),
+                           np.linspace(normstart[1],normstart[1]+normsize[1],int(self.crop_size[1]/self.stride)),
+                           np.linspace(normstart[2],normstart[2]+normsize[2],int(self.crop_size[2]/self.stride)),indexing ='ij')
         coord = np.concatenate([xx[np.newaxis,...], yy[np.newaxis,...],zz[np.newaxis,:]],0).astype('float32')
 
         pad = []
@@ -231,11 +235,12 @@ class Crop(object):
         for i in range(3):
             leftpad = max(0,-start[i])
             rightpad = max(0,start[i]+crop_size[i]-imgs.shape[i+1])
-            pad.append([leftpad,rightpad])
+            pad.append([int(leftpad),int(rightpad)])
         crop = imgs[:,
             max(start[0],0):min(start[0] + crop_size[0],imgs.shape[1]),
             max(start[1],0):min(start[1] + crop_size[1],imgs.shape[2]),
             max(start[2],0):min(start[2] + crop_size[2],imgs.shape[3])]
+        print(1,pad)
         crop = np.pad(crop,pad,'constant',constant_values =self.pad_value)
         for i in range(3):
             target[i] = target[i] - start[i] 
@@ -247,11 +252,12 @@ class Crop(object):
             with warnings.catch_warnings():
                 warnings.simplefilter("ignore")
                 crop = zoom(crop,[1,scale,scale,scale],order=1)
-            newpad = self.crop_size[0]-crop.shape[1:][0]
+            newpad = int(self.crop_size[0]-crop.shape[1:][0])
             if newpad<0:
                 crop = crop[:,:-newpad,:-newpad,:-newpad]
             elif newpad>0:
                 pad2 = [[0,0],[0,newpad],[0,newpad],[0,newpad]]
+                print(2,pad2)
                 crop = np.pad(crop,pad2,'constant',constant_values =self.pad_value)
             for i in range(4):
                 target[i] = target[i]*scale
@@ -414,4 +420,3 @@ def collate(batch):
     elif isinstance(batch[0], collections.Iterable):
         transposed = zip(*batch)
         return [collate(samples) for samples in transposed]
-
