@@ -76,7 +76,7 @@ class DataBowl3Classifier(Dataset):
         else:
             chosenid = conf_list.argsort()[::-1][:topk]
         croplist = np.zeros([topk,1,self.crop_size[0],self.crop_size[1],self.crop_size[2]]).astype('float32')
-        coordlist = np.zeros([topk,3,self.crop_size[0]/self.stride,self.crop_size[1]/self.stride,self.crop_size[2]/self.stride]).astype('float32')
+        coordlist = np.zeros([topk,3,int(self.crop_size[0]/self.stride),int(self.crop_size[1]/self.stride),int(self.crop_size[2]/self.stride)]).astype('float32')
         padmask = np.concatenate([np.ones(len(chosenid)),np.zeros(self.topk-len(chosenid))])
         isnodlist = np.zeros([topk])
 
